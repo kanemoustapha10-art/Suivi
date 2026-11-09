@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Suivi Parfums</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: carnet de comptes mobile. Onglets collants en haut, cartes simples, chiffres en chasse fixe. */
+:root{
+  --bg:#EEF2F0; --surface:#FFFFFF; --ink:#12231F; --muted:#586964; --line:#D3DCD8;
+  --accent:#0E5A52; --accent-soft:#D6EAE6; --on-accent:#FFFFFF;
+  --good:#1D7448; --good-soft:#DCEFE4; --warn:#945A08; --warn-soft:#F5E7CC; --bad:#B0322A; --bad-soft:#F6DAD6;
+  --gros:#2C479C; --gros-soft:#E0E6F7;
+  --f-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1715; --surface:#16231F; --ink:#E4EEEA; --muted:#93A7A0; --line:#2A3C37;
+    --accent:#5CC4B4; --accent-soft:#17342F; --on-accent:#08201C;
+    --good:#5CC98C; --good-soft:#173A2A; --warn:#E0A94A; --warn-soft:#3A2D12; --bad:#EE7C70; --bad-soft:#3F1E1B;
+    --gros:#8FA8F0; --gros-soft:#1E2848; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1715; --surface:#16231F; --ink:#E4EEEA; --muted:#93A7A0; --line:#2A3C37;
+  --accent:#5CC4B4; --accent-soft:#17342F; --on-accent:#08201C;
+  --good:#5CC98C; --good-soft:#173A2A; --warn:#E0A94A; --warn-soft:#3A2D12; --bad:#EE7C70; --bad-soft:#3F1E1B;
+  --gros:#8FA8F0; --gros-soft:#1E2848; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);
+  padding-block:8px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:980px;margin:0 auto}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 0 8px}
+h1{font:700 24px/1.1 var(--f-display);letter-spacing:-.015em;margin:0}
+h2{font:700 17px/1.2 var(--f-display);margin:0 0 12px}
+h3{font:600 13px/1.2 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.status{font:500 12px var(--f-body);color:var(--muted);text-align:right}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:2px;overflow-x:auto;padding:6px 0;border-bottom:1px solid var(--line);margin-bottom:16px}
+nav.tabs a{flex:1 0 auto;text-align:center;text-decoration:none;color:var(--muted);font-weight:600;padding:9px 14px;border-radius:8px;white-space:nowrap}
+nav.tabs a[aria-current="page"]{background:var(--accent);color:var(--on-accent)}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+fieldset.panel{border:0;margin:0;padding:0;min-width:0;display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.k-l{font:600 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.k-v{font:500 22px/1.2 var(--f-mono);margin:6px 0 2px;overflow-wrap:anywhere}
+.k-s{font-size:13px;color:var(--muted)}
+.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.bar{height:14px;border-radius:7px;background:var(--line);display:flex;overflow:hidden;margin:10px 0 12px}
+.bar i{display:block;height:100%}
+.seg-paid{background:var(--accent)}
+.seg-held{background:repeating-linear-gradient(45deg,var(--accent) 0 3px,transparent 3px 7px)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 16px;font-size:14px}
+.legend b{display:block;font:500 16px var(--f-mono)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:var(--line)}
+.sw.p{background:var(--accent)} .sw.h{background:repeating-linear-gradient(45deg,var(--accent) 0 2px,transparent 2px 4px);border:1px solid var(--accent)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;align-items:end}
+label{display:grid;gap:4px;font:600 13px var(--f-body);color:var(--muted);min-width:0}
+input,select{font:16px var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%;min-width:0}
+button{font:600 15px var(--f-body);cursor:pointer}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:11px 16px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.x{background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 8px;font:500 12px var(--f-body)}
+.x[data-armed]{color:var(--bad);border-color:var(--bad)}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.err{color:var(--bad);font-size:14px;margin:8px 0 0;min-height:0}
+.live{font-size:14px;color:var(--ink);margin:10px 0 0}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:600 12px var(--f-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.r,th.r{text-align:right}
+tr.tot td{font-weight:600;border-bottom:0}
+tr.hit td{background:var(--good-soft)}
+.chip{display:inline-block;font:600 12px var(--f-body);padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.chip.gros{background:var(--gros-soft);color:var(--gros)}
+.empty{color:var(--muted);padding:6px 0}
+.rows{display:grid;gap:0}
+.rows div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.rows div:last-child{border-bottom:0}
+.rows .sum{font-weight:600}
+.callout{border-radius:8px;padding:12px 14px;font-size:14px}
+.callout.good{background:var(--good-soft);color:var(--good)}
+.callout.warn{background:var(--warn-soft);color:var(--warn)}
+.intro ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.intro a,.card a{color:var(--accent);font-weight:600}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div id="app"></div>
+<script>
+(function(){
+'use strict';
+var LS='suivi-parfums-v1';
+var TABS=[['accueil','Accueil'],['stock','Stock'],['ventes','Ventes'],['argent','Argent'],['projection','Cycles']];
+
+function DEF(){return {
+  settings:{unitCost:4500,priceDetail:15000,priceGrosDoz:108000,giftsPerDoz:2},
+  lots:[],sales:[],gifts:[],apports:[],
+  proj:{start:108000,grosShare:100,cap:0,cycles:10,pct:100}
+};}
+function norm(raw){
+  var d=DEF(); if(!raw||typeof raw!=='object') return d;
+  try{raw=JSON.parse(JSON.stringify(raw));}catch(e){return d;}
+  ['lots','sales','gifts','apports'].forEach(function(k){ if(Array.isArray(raw[k])) d[k]=raw[k]; });
+  var rs=raw.settings||{}; Object.keys(d.settings).forEach(function(k){ if(typeof rs[k]==='number') d.settings[k]=rs[k]; });
+  var rp=raw.proj||{}; Object.keys(d.proj).forEach(function(k){ if(typeof rp[k]==='number') d.proj[k]=rp[k]; });
+  return d;
+}
+
+/* ---------- utilitaires ---------- */
+function $(s,r){return (r||document).querySelector(s);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var nf=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
+function fmt(n){return nf.format(Math.round(n||0));}
+function money(n){return fmt(n)+' F';}
+function uid(){return (window.crypto&&crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2,8)).slice(0,36);}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function num(v){var n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isFinite(n)?n:0;}
+function fdate(s){var m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(s||'');return m?m[3]+'/'+m[2]+'/'+m[1]:esc(s||'');}
+function newest(arr){return arr.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return (b.x.date||'').localeCompare(a.x.date||'')||b.i-a.i;}).map(function(o){return o.x;});}
+
+/* ---------- état et stockage ---------- */
+var state=norm(null), ready=false, statusText='Chargement…', tab=curTab();
+var ref=null, dirty=false, inflight=false, again=false, saveTimer=null, slowTimer=null;
+
+function curTab(){var h=(location.hash||'').slice(1);return TABS.some(function(t){return t[0]===h;})?h:'accueil';}
+function setStatus(t){statusText=t;var el=$('#status');if(el)el.textContent=t;}
+function snapshotJSON(s){return JSON.stringify(s);}
+
+function queueSave(){
+  if(!ref){try{localStorage.setItem(LS,snapshotJSON(state));setStatus('Gardé sur cet appareil');}catch(e){setStatus('Non enregistré');}return;}
+  dirty=true;setStatus('Enregistrement…');clearTimeout(saveTimer);saveTimer=setTimeout(flush,350);
+}
+function flush(){
+  if(inflight){again=true;return;}
+  inflight=true;
+  ref.set(JSON.parse(snapshotJSON(state))).then(function(){setStatus('Enregistré');},function(){setStatus('Erreur : non enregistré');}).then(function(){
+    inflight=false; if(again){again=false;flush();}else{dirty=false;}
+  });
+}
+function mutate(fn){fn(state);queueSave();render();}
+
+function loadLocal(){
+  try{var raw=localStorage.getItem(LS);if(raw)state=norm(JSON.parse(raw));}catch(e){}
+  ready=true;setStatus('Gardé sur cet appareil');render();
+}
+function init(){
+  render();
+  var p=(window.claude&&window.claude.use)?window.claude.use('db'):Promise.resolve(null);
+  Promise.resolve(p).catch(function(){return null;}).then(function(db){
+    if(!db){loadLocal();return;}
+    try{ref=db.doc('app/state');}catch(e){ref=null;loadLocal();return;}
+    slowTimer=setTimeout(function(){if(!ready)setStatus('Connexion lente…');},10000);
+    ref.onSnapshot(function(snap){
+      if(snap.exists||!snap.metadata.fromCache){
+        clearTimeout(slowTimer);
+        var incoming=norm(snap.exists?snap.data():null);
+        if(!ready){state=incoming;ready=true;setStatus('Enregistré');render();}
+        else if(!dirty&&!inflight&&snapshotJSON(incoming)!==snapshotJSON(state)){state=incoming;render();}
+      }
+    },function(){clearTimeout(slowTimer);if(!ready){loadLocal();}else{setStatus('Synchronisation interrompue');}});
+  });
+}
+
+/* ---------- calculs ---------- */
+function calc(s){
+  var per={};
+  function P(n){return per[n]||(per[n]={name:n,ordered:0,cost:0,sold:0,gift:0,rev:0});}
+  s.lots.forEach(function(l){var p=P(l.parfum);p.ordered+=l.qty;p.cost+=l.qty*l.unit;});
+  s.sales.forEach(function(x){var p=P(x.parfum);p.sold+=x.qty;p.rev+=x.qty*x.price;});
+  s.gifts.forEach(function(g){P(g.parfum).gift+=g.qty;});
+  var stockQty=0,stockVal=0,cogs=0,soldQty=0,giftQty=0,orderedQty=0;
+  Object.keys(per).forEach(function(k){var p=per[k];
+    p.avg=p.ordered?p.cost/p.ordered:0; p.stock=p.ordered-p.sold-p.gift; p.stockVal=p.stock*p.avg;
+    stockQty+=p.stock;stockVal+=p.stockVal;cogs+=(p.sold+p.gift)*p.avg;soldQty+=p.sold;giftQty+=p.gift;orderedQty+=p.ordered;});
+  function sum(a,f){return a.reduce(function(t,x){return t+f(x);},0);}
+  var achats=sum(s.lots,function(l){return l.qty*l.unit;});
+  var ca=sum(s.sales,function(x){return x.qty*x.price;});
+  var caDetail=sum(s.sales.filter(function(x){return x.canal!=='gros';}),function(x){return x.qty*x.price;});
+  var apports=sum(s.apports,function(x){return x.amount;});
+  var tres=apports+ca-achats, profit=ca-cogs;
+  var dozCost=12*s.settings.unitCost, doz=dozCost>0?Math.max(0,Math.floor(tres/dozCost)):0;
+  return {per:per,stockQty:stockQty,stockVal:stockVal,cogs:cogs,soldQty:soldQty,giftQty:giftQty,orderedQty:orderedQty,
+    achats:achats,ca:ca,caDetail:caDetail,caGros:ca-caDetail,apports:apports,tres:tres,profit:profit,dozCost:dozCost,doz:doz};
+}
+function project(s){
+  var p=s.proj,st=s.settings;
+  var costDoz=12*st.unitCost, gifts=Math.min(12,Math.max(0,st.giftsPerDoz));
+  var revDet=(12-gifts)*st.priceDetail, revGros=st.priceGrosDoz;
+  var g=Math.min(1,Math.max(0,p.grosShare/100)), rev=g*revGros+(1-g)*revDet, pct=Math.min(1,Math.max(0,p.pct/100));
+  var pool=p.start,cum=0,rows=[],n=Math.min(20,Math.max(1,Math.round(p.cycles)));
+  for(var i=1;i<=n;i++){
+    var d=costDoz>0?Math.floor(pool/costDoz):0; if(p.cap>0) d=Math.min(d,Math.floor(p.cap));
+    var cost=d*costDoz,revenue=d*rev,profit=revenue-cost; cum+=profit;
+    rows.push({i:i,startPool:pool,d:d,fl:d*12,revenue:revenue,profit:profit,cum:cum}); pool+=profit*pct;
+  }
+  return {rows:rows,costDoz:costDoz,rev:rev,revDet:revDet,revGros:revGros};
+}
+
+/* ---------- vues ---------- */
+function kpi(l,v,sub,cls){return '<div class="kpi"><div class="k-l">'+l+'</div><div class="k-v '+(cls||'')+'">'+v+'</div><div class="k-s">'+sub+'</div></div>';}
+function tabsHTML(){return '<nav class="tabs" aria-label="Sections">'+TABS.map(function(t){return '<a href="#'+t[0]+'"'+(t[0]===tab?' aria-current="page"':'')+'>'+t[1]+'</a>';}).join('')+'</nav>';}
+function delBtn(coll,id){return '<button type="button" class="x" data-del="'+coll+':'+esc(id)+'">Supprimer</button>';}
+function sgn(n){return n<0?'neg':'';}
+
+function pAccueil(c){
+  var s=state,h='';
+  if(!s.lots.length&&!s.sales.length&&!s.apports.length){
+    h+='<div class="card intro"><h2>Pour commencer</h2><ol><li>Onglet <a href="#argent">Argent</a> : note l’apport de départ.</li><li>Onglet <a href="#stock">Stock</a> : note la première commande, avec le coût tout compris par flacon.</li><li>Onglet <a href="#ventes">Ventes</a> : note chaque vente. Les totaux se mettent à jour tout seuls.</li></ol></div>';
+  }
+  var margin=c.ca>0?Math.round(c.profit/c.ca*100)+' % du chiffre d’affaires':'Aucune vente pour l’instant';
+  h+='<div class="kpis">'
+    +kpi('Trésorerie',money(c.tres),'Apports + ventes − achats',sgn(c.tres))
+    +kpi('Stock',fmt(c.stockQty)+' fl.','Valeur au coût : '+money(c.stockVal))
+    +kpi('Chiffre d’affaires',money(c.ca),fmt(c.soldQty)+' flacons vendus')
+    +kpi('Bénéfice réalisé',money(c.profit),margin,c.profit>0?'pos':sgn(c.profit))
+    +'</div>';
+  h+='<div class="card"><h2>Prochaine commande</h2><div class="k-v n" style="margin:0">'+money(Math.max(0,c.tres))+'</div>'
+    +'<p class="hint" style="margin-top:4px">Trésorerie disponible. Cela fait '+c.doz+' douzaine'+(c.doz>1?'s':'')+' à '+money(c.dozCost)+'. <a href="#stock">Ajouter une commande</a></p></div>';
+  var last=newest(s.sales).slice(0,5);
+  h+='<div class="card"><h2>Dernières ventes</h2>';
+  if(!last.length) h+='<div class="empty">Aucune vente enregistrée. <a href="#ventes">Ajouter une vente</a></div>';
+  else h+='<div class="scroll"><table><thead><tr><th>Date</th><th>Parfum</th><th class="r">Qté</th><th class="r">Total</th></tr></thead><tbody>'
+    +last.map(function(x){return '<tr><td>'+fdate(x.date)+'</td><td>'+esc(x.parfum)+' '+chan(x.canal)+'</td><td class="r n">'+fmt(x.qty)+'</td><td class="r n">'+money(x.qty*x.price)+'</td></tr>';}).join('')
+    +'</tbody></table></div>';
+  h+='</div>';
+  return h;
+}
+function chan(c){return c==='gros'?'<span class="chip gros">Gros</span>':'<span class="chip">Détail</span>';}
+
+function pStock(c){
+  var s=state,names=Object.keys(c.per).sort(),h='';
+  var inStock=names.filter(function(n){return c.per[n].stock>0;});
+  h+='<div class="two"><div class="card"><h2>Nouvelle commande</h2><form data-form="lot" class="" novalidate><div class="form">'
+    +'<label>Date<input type="date" name="date" value="'+today()+'"></label>'
+    +'<label>Parfum<input type="text" name="parfum" list="dl-parfums" placeholder="Ex. Ajwa" autocomplete="off"></label>'
+    +'<label>Quantité (flacons)<input type="number" name="qty" min="1" step="1" inputmode="numeric" value="12"></label>'
+    +'<label>Coût par flacon (F)<input type="number" name="unit" min="0" step="1" inputmode="numeric" value="'+s.settings.unitCost+'"></label>'
+    +'</div><datalist id="dl-parfums">'+names.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'
+    +'<p class="hint">Le coût par flacon comprend le parfum et tous les frais (transport, douane, livraison).</p><p class="err" data-err></p>'
+    +'<button class="btn" type="submit">Ajouter la commande</button></form></div>'
+    +'<div class="card"><h2>Flacons offerts ou échantillons</h2><form data-form="gift" novalidate><div class="form">'
+    +'<label>Date<input type="date" name="date" value="'+today()+'"></label>'
+    +'<label>Parfum<select name="parfum">'+(inStock.length?inStock.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+' ('+c.per[n].stock+' en stock)</option>';}).join(''):'<option value="">Aucun stock</option>')+'</select></label>'
+    +'<label>Quantité<input type="number" name="qty" min="1" step="1" inputmode="numeric" value="1"></label>'
+    +'<label>Motif<select name="motif"><option>Influenceur</option><option>Échantillon</option><option>Autre</option></select></label>'
+    +'</div><p class="hint">Un flacon offert sort du stock et son coût est compté dans les dépenses.</p><p class="err" data-err></p>'
+    +'<button class="btn" type="submit"'+(inStock.length?'':' disabled')+'>Enregistrer la sortie</button></form></div></div>';
+
+  h+='<div class="card"><h2>Stock par parfum</h2>';
+  if(!names.length) h+='<div class="empty">Aucune commande pour l’instant. Ajoute la première ci-dessus.</div>';
+  else{
+    h+='<div class="scroll"><table><thead><tr><th>Parfum</th><th class="r">Commandés</th><th class="r">Vendus</th><th class="r">Offerts</th><th class="r">En stock</th><th class="r">Coût moyen</th><th class="r">Valeur</th></tr></thead><tbody>'
+    +names.map(function(n){var p=c.per[n];return '<tr><td>'+esc(n)+'</td><td class="r n">'+fmt(p.ordered)+'</td><td class="r n">'+fmt(p.sold)+'</td><td class="r n">'+fmt(p.gift)+'</td><td class="r n '+(p.stock<0?'neg':'')+'">'+fmt(p.stock)+'</td><td class="r n">'+money(p.avg)+'</td><td class="r n">'+money(p.stockVal)+'</td></tr>';}).join('')
+    +'<tr class="tot"><td>Total</td><td class="r n">'+fmt(c.orderedQty)+'</td><td class="r n">'+fmt(c.soldQty)+'</td><td class="r n">'+fmt(c.giftQty)+'</td><td class="r n">'+fmt(c.stockQty)+'</td><td></td><td class="r n">'+money(c.stockVal)+'</td></tr></tbody></table></div>';
+    if(names.some(function(n){return c.per[n].stock<0;})) h+='<p class="err">Un stock est négatif : une commande a été supprimée ou une quantité est fausse.</p>';
+  }
+  h+='</div>';
+
+  h+='<div class="card"><h2>Historique des commandes</h2>';
+  if(!s.lots.length) h+='<div class="empty">Aucune commande.</div>';
+  else h+='<div class="scroll"><table><thead><tr><th>Date</th><th>Parfum</th><th class="r">Qté</th><th class="r">Coût unit.</th><th class="r">Total</th><th></th></tr></thead><tbody>'
+    +newest(s.lots).map(function(l){return '<tr><td>'+fdate(l.date)+'</td><td>'+esc(l.parfum)+'</td><td class="r n">'+fmt(l.qty)+'</td><td class="r n">'+money(l.unit)+'</td><td class="r n">'+money(l.qty*l.unit)+'</td><td class="r">'+delBtn('lots',l.id)+'</td></tr>';}).join('')
+    +'</tbody></table></div>';
+  h+='</div>';
+
+  if(s.gifts.length){
+    h+='<div class="card"><h2>Flacons offerts</h2><div class="scroll"><table><thead><tr><th>Date</th><th>Parfum</th><th class="r">Qté</th><th>Motif</th><th></th></tr></thead><tbody>'
+      +newest(s.gifts).map(function(g){return '<tr><td>'+fdate(g.date)+'</td><td>'+esc(g.parfum)+'</td><td class="r n">'+fmt(g.qty)+'</td><td>'+esc(g.motif)+'</td><td class="r">'+delBtn('gifts',g.id)+'</td></tr>';}).join('')
+      +'</tbody></table></div></div>';
+  }
+  return h;
+}
+
+function pVentes(c){
+  var s=state,names=Object.keys(c.per).filter(function(n){return c.per[n].stock>0;}).sort(),h='';
+  h+='<div class="kpis">'+kpi('Chiffre d’affaires',money(c.ca),fmt(c.soldQty)+' flacons')
+    +kpi('Détail',money(c.caDetail),'Vente à l’unité')+kpi('Gros',money(c.caGros),'Vente aux revendeurs')+'</div>';
+  h+='<div class="card"><h2>Nouvelle vente</h2>';
+  if(!names.length) h+='<div class="empty">Aucun flacon en stock. Ajoute d’abord une commande dans l’onglet <a href="#stock">Stock</a>.</div>';
+  else h+='<form data-form="sale" novalidate><div class="form">'
+    +'<label>Date<input type="date" name="date" value="'+today()+'"></label>'
+    +'<label>Parfum<select name="parfum">'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+' ('+c.per[n].stock+' en stock)</option>';}).join('')+'</select></label>'
+    +'<label>Canal<select name="canal"><option value="detail">Détail</option><option value="gros">Gros</option></select></label>'
+    +'<label>Quantité (flacons)<input type="number" name="qty" min="1" step="1" inputmode="numeric" value="1"></label>'
+    +'<label>Prix par flacon (F)<input type="number" name="price" min="0" step="1" inputmode="numeric" value="'+s.settings.priceDetail+'"></label>'
+    +'<label>Client (facultatif)<input type="text" name="client" autocomplete="off"></label>'
+    +'</div><p class="live" id="saleLive"></p><p class="err" data-err></p><button class="btn" type="submit">Enregistrer la vente</button></form>';
+  h+='</div>';
+  h+='<div class="card"><h2>Historique des ventes</h2>';
+  if(!s.sales.length) h+='<div class="empty">Aucune vente enregistrée.</div>';
+  else h+='<div class="scroll"><table><thead><tr><th>Date</th><th>Parfum</th><th>Canal</th><th class="r">Qté</th><th class="r">Prix</th><th class="r">Total</th><th>Client</th><th></th></tr></thead><tbody>'
+    +newest(s.sales).map(function(x){return '<tr><td>'+fdate(x.date)+'</td><td>'+esc(x.parfum)+'</td><td>'+chan(x.canal)+'</td><td class="r n">'+fmt(x.qty)+'</td><td class="r n">'+money(x.price)+'</td><td class="r n">'+money(x.qty*x.price)+'</td><td>'+esc(x.client||'')+'</td><td class="r">'+delBtn('sales',x.id)+'</td></tr>';}).join('')
+    +'</tbody></table></div>';
+  h+='</div>';
+  return h;
+}
+
+function pArgent(c){
+  var s=state,st=s.settings,h='';
+  h+='<div class="two"><div class="card"><h2>Trésorerie</h2><div class="rows">'
+    +'<div><span>Apports</span><span class="n">'+money(c.apports)+'</span></div>'
+    +'<div><span>+ Ventes</span><span class="n">'+money(c.ca)+'</span></div>'
+    +'<div><span>− Achats de parfums</span><span class="n">'+money(c.achats)+'</span></div>'
+    +'<div class="sum"><span>= Trésorerie</span><span class="n '+sgn(c.tres)+'">'+money(c.tres)+'</span></div></div></div>'
+    +'<div class="card"><h2>Bénéfice</h2><div class="rows">'
+    +'<div><span>Ventes</span><span class="n">'+money(c.ca)+'</span></div>'
+    +'<div><span>− Coût d’achat des flacons vendus ou offerts</span><span class="n">'+money(c.cogs)+'</span></div>'
+    +'<div class="sum"><span>= Bénéfice réalisé</span><span class="n '+sgn(c.profit)+'">'+money(c.profit)+'</span></div></div>'
+    +'<p class="hint">Le coût d’achat est le coût moyen par parfum.</p></div></div>';
+
+  h+='<div class="two"><div class="card"><h2>Ajouter un apport</h2><form data-form="apport" novalidate><div class="form">'
+    +'<label>Date<input type="date" name="date" value="'+today()+'"></label>'
+    +'<label>De la part de<input type="text" name="who" autocomplete="off"></label>'
+    +'<label>Montant (F)<input type="number" name="amount" min="1" step="1" inputmode="numeric"></label></div>'
+    +'<p class="err" data-err></p><button class="btn" type="submit">Ajouter l’apport</button></form></div>'
+    +'<div class="card"><h2>Apports</h2>';
+  if(!s.apports.length) h+='<div class="empty">Aucun apport.</div>';
+  else h+='<div class="scroll"><table><thead><tr><th>Date</th><th>De</th><th class="r">Montant</th><th></th></tr></thead><tbody>'
+    +newest(s.apports).map(function(a){return '<tr><td>'+fdate(a.date)+'</td><td>'+esc(a.who)+'</td><td class="r n">'+money(a.amount)+'</td><td class="r">'+delBtn('apports',a.id)+'</td></tr>';}).join('')+'</tbody></table></div>';
+  h+='</div></div>';
+
+  function set(k,l,v,extra){return '<label>'+l+'<input type="number" data-set="'+k+'" value="'+v+'" min="0" step="1" inputmode="numeric" '+(extra||'')+'></label>';}
+  h+='<div class="card"><h2>Réglages</h2><div class="form">'
+    +set('unitCost','Coût par flacon (F)',st.unitCost)+set('priceDetail','Prix de vente au détail (F)',st.priceDetail)
+    +set('priceGrosDoz','Prix de la douzaine en gros (F)',st.priceGrosDoz)+set('giftsPerDoz','Flacons offerts par douzaine',st.giftsPerDoz,'max="12"')
+    +'</div><p class="hint">Ces valeurs servent de réglages par défaut pour les formulaires, la prochaine commande et les cycles.</p></div>';
+  return h;
+}
+
+function projOutHTML(){
+  var s=state,r=project(s),st=s.settings;
+  var h='<div class="rows"><div><span>Coût d’une douzaine</span><span class="n">'+money(r.costDoz)+'</span></div>'
+    +'<div><span>Recette d’une douzaine au détail ('+(12-Math.min(12,st.giftsPerDoz))+' vendus)</span><span class="n">'+money(r.revDet)+'</span></div>'
+    +'<div><span>Recette d’une douzaine en gros</span><span class="n">'+money(r.revGros)+'</span></div>'
+    +'<div class="sum"><span>Recette retenue par douzaine</span><span class="n">'+money(r.rev)+'</span></div></div>';
+  var last=r.rows[r.rows.length-1];
+  h+='<div style="margin:14px 0"><div class="callout good">Après '+r.rows.length+' cycles : bénéfice cumulé de '+money(last.cum)+', avec '+fmt(last.fl)+' flacons au dernier cycle.</div></div>';
+  h+='<div class="scroll"><table><thead><tr><th>Cycle</th><th class="r">Capital investi</th><th class="r">Douzaines</th><th class="r">Flacons</th><th class="r">Chiffre d’aff.</th><th class="r">Bénéfice</th><th class="r">Bénéfice cumulé</th></tr></thead><tbody>'
+    +r.rows.map(function(x){return '<tr><td>'+x.i+'</td><td class="r n">'+money(x.startPool)+'</td><td class="r n">'+fmt(x.d)+'</td><td class="r n">'+fmt(x.fl)+'</td><td class="r n">'+money(x.revenue)+'</td><td class="r n '+sgn(x.profit)+'">'+money(x.profit)+'</td><td class="r n">'+money(x.cum)+'</td></tr>';}).join('')
+    +'</tbody></table></div>';
+  return h;
+}
+function pProjection(){
+  var p=state.proj;
+  function f(k,l,v,extra){return '<label>'+l+'<input type="number" data-proj="'+k+'" value="'+v+'" min="0" step="1" inputmode="numeric" '+(extra||'')+'></label>';}
+  return '<div class="card"><h2>Hypothèses</h2><div class="form">'
+    +f('start','Capital de départ (F)',p.start)+f('grosShare','Part vendue en gros (%)',p.grosShare,'max="100"')
+    +f('pct','Part du bénéfice réinvestie (%)',p.pct,'max="100"')+f('cap','Plafond de douzaines par cycle (0 = aucun)',p.cap)
+    +f('cycles','Nombre de cycles',p.cycles,'min="1" max="20"')+'</div>'
+    +'<p class="hint">Calcul théorique : tout se vend au prix prévu. Le plafond sert à tenir compte de ce qui peut vraiment être écoulé par cycle. La part non réinvestie est retirée du capital. Les prix et le coût viennent des réglages de l’onglet Argent.</p></div>'
+    +'<div class="card"><h2>Résultat</h2><div id="projOut">'+projOutHTML()+'</div></div>';
+}
+
+function render(){
+  var app=$('#app'); if(!app) return;
+  var c=calc(state),body;
+  if(!ready) body='<div class="card"><div class="empty">Chargement des données…</div></div>';
+  else if(tab==='stock') body=pStock(c); else if(tab==='ventes') body=pVentes(c);
+  else if(tab==='argent') body=pArgent(c); else if(tab==='projection') body=pProjection();
+  else body=pAccueil(c);
+  app.innerHTML='<div class="wrap"><header class="top"><h1>Suivi Parfums</h1><span class="status" id="status">'+esc(statusText)+'</span></header>'+tabsHTML()
+    +'<fieldset class="panel"'+(ready?'':' disabled')+'>'+body+'</fieldset></div>';
+  updateSaleLive();
+}
+
+/* ---------- formulaires ---------- */
+function updateSaleLive(){
+  var f=$('form[data-form="sale"]'),el=$('#saleLive'); if(!f||!el) return;
+  var qty=num(f.qty.value),price=num(f.price.value),c=calc(state),p=c.per[f.parfum.value];
+  if(!(qty>0)){el.textContent='';return;}
+  var total=qty*price,avg=p?p.avg:0;
+  el.innerHTML='Total : <b class="n">'+money(total)+'</b> · Bénéfice estimé : <b class="n '+sgn(total-qty*avg)+'">'+money(total-qty*avg)+'</b> <span style="color:var(--muted)">(coût moyen '+money(avg)+' par flacon)</span>';
+}
+var handlers={
+  lot:function(v){
+    var parfum=(v.parfum||'').trim(),qty=Math.round(num(v.qty)),unit=num(v.unit);
+    if(!parfum) return 'Indique le nom du parfum.'; if(!(qty>0)) return 'La quantité doit être supérieure à 0.'; if(!(unit>0)) return 'Indique le coût par flacon.';
+    mutate(function(s){s.lots.push({id:uid(),date:v.date||today(),parfum:parfum,qty:qty,unit:unit});}); return '';
+  },
+  gift:function(v){
+    var qty=Math.round(num(v.qty)),p=calc(state).per[v.parfum];
+    if(!v.parfum) return 'Aucun parfum en stock.'; if(!(qty>0)) return 'La quantité doit être supérieure à 0.';
+    if(!p||qty>p.stock) return 'Stock insuffisant : il reste '+(p?p.stock:0)+' flacon(s).';
+    mutate(function(s){s.gifts.push({id:uid(),date:v.date||today(),parfum:v.parfum,qty:qty,motif:v.motif||'Autre'});}); return '';
+  },
+  sale:function(v){
+    var qty=Math.round(num(v.qty)),price=num(v.price),p=calc(state).per[v.parfum];
+    if(!v.parfum) return 'Choisis un parfum.'; if(!(qty>0)) return 'La quantité doit être supérieure à 0.'; if(!(price>0)) return 'Indique le prix par flacon.';
+    if(!p||qty>p.stock) return 'Stock insuffisant : il reste '+(p?p.stock:0)+' flacon(s).';
+    mutate(function(s){s.sales.push({id:uid(),date:v.date||today(),parfum:v.parfum,canal:v.canal==='gros'?'gros':'detail',qty:qty,price:price,client:(v.client||'').trim()});}); return '';
+  },
+  apport:function(v){
+    var amount=num(v.amount); if(!(amount>0)) return 'Indique un montant.';
+    mutate(function(s){s.apports.push({id:uid(),date:v.date||today(),who:(v.who||'').trim()||'Apport',amount:amount});}); return '';
+  }
+};
+document.addEventListener('submit',function(e){
+  var f=e.target.closest&&e.target.closest('form[data-form]'); if(!f) return;
+  e.preventDefault();
+  var v={}; new FormData(f).forEach(function(val,k){v[k]=val;});
+  var msg=handlers[f.dataset.form](v), er=f.querySelector('[data-err]'); if(er) er.textContent=msg||'';
+});
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-del]'); if(!b) return;
+  if(b.hasAttribute('data-armed')){
+    var parts=b.dataset.del.split(':'),coll=parts[0],id=parts.slice(1).join(':');
+    mutate(function(s){s[coll]=s[coll].filter(function(x){return x.id!==id;});});
+  }else{
+    b.setAttribute('data-armed','1');b.textContent='Confirmer';
+    setTimeout(function(){if(b.isConnected){b.removeAttribute('data-armed');b.textContent='Supprimer';}},3000);
+  }
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.matches&&t.matches('[data-proj]')){
+    state.proj[t.dataset.proj]=num(t.value);
+    var o=$('#projOut'); if(o) o.innerHTML=projOutHTML();
+  }else if(t.form&&t.form.dataset&&t.form.dataset.form==='sale'){updateSaleLive();}
+});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.matches&&t.matches('[data-proj]')){queueSave();}
+  else if(t.matches&&t.matches('[data-set]')){var k=t.dataset.set,v=num(t.value);mutate(function(s){s.settings[k]=v;});}
+  else if(t.name==='canal'&&t.form&&t.form.dataset.form==='sale'){
+    var st=state.settings; t.form.price.value=t.value==='gros'?Math.round(st.priceGrosDoz/12):st.priceDetail; updateSaleLive();
+  }else if(t.name==='parfum'&&t.form&&t.form.dataset.form==='sale'){updateSaleLive();}
+});
+window.addEventListener('hashchange',function(){tab=curTab();render();window.scrollTo(0,0);});
+
+init();
+})();
+</script>
+
+</html>
